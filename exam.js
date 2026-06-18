@@ -1,5 +1,5 @@
 const API_URL =
-  "https://script.google.com/macros/s/AKfycbwP_AXwBp6MM-GUq5DXczRPobUTymOM1H4wNEkdmWSdc_-MHNkV0vclJzf-lhlLNV8YxQ/exec";
+  "https://script.google.com/macros/s/AKfycbwwZ0X7ZA8lssuN5zEltUQWQLkltVulFbvcQbpM2dL0tshPrF3216Aq1XjieCdbEiyiow/exec";
 
 // ── Config ────────────────────────────────────────────────────
 const CATEGORIES        = ["Aptitude", "Reasoning", "Python", "C Programming", "ARM"];
