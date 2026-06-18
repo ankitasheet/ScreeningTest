@@ -23,26 +23,54 @@ function loadData(key, isUnlockAttempt = false) {
   const errEl = document.getElementById("keyError");
   errEl.textContent = "";
 
-  fetch(`${API_URL}?key=${encodeURIComponent(key)}`)
-    .then(res => res.json())
-    .then(data => {
-      if (!data.ok) {
-        if (isUnlockAttempt) {
-          errEl.textContent = "Incorrect admin key. Please check your Apps Script ADMIN_KEY and try again.";
-        }
-        return;
+  // Apps Script /exec responses don't carry an Access-Control-Allow-Origin
+  // header, so a cross-origin fetch() can never read the body (the request
+  // succeeds, but the browser blocks the response). We sidestep this with
+  // JSONP: load the data via a <script> tag, which browsers don't subject
+  // to CORS, and have the Apps Script side (with ?callback=...) wrap the
+  // JSON in a call to a one-off global function we define below.
+  const callbackName = `__adminCb${Date.now()}`;
+  const script = document.createElement("script");
+  let timeoutId;
+
+  const cleanup = () => {
+    clearTimeout(timeoutId);
+    delete window[callbackName];
+    script.remove();
+  };
+
+  window[callbackName] = (data) => {
+    cleanup();
+
+    if (!data.ok) {
+      if (isUnlockAttempt) {
+        errEl.textContent = "Incorrect admin key. Please check your Apps Script ADMIN_KEY and try again.";
       }
-      sessionStorage.setItem("adminKey", key);
-      submissions = data.submissions || [];
-      document.getElementById("keyGate").style.display = "none";
-      document.getElementById("adminWrap").classList.add("active");
-      document.body.classList.remove("login-page");
-      document.body.classList.add("admin-page");
-      render();
-    })
-    .catch(() => {
-      errEl.textContent = "Could not reach the backend. Check the API_URL in admin.js and your network connection.";
-    });
+      return;
+    }
+    sessionStorage.setItem("adminKey", key);
+    submissions = data.submissions || [];
+    document.getElementById("keyGate").style.display = "none";
+    document.getElementById("adminWrap").classList.add("active");
+    document.body.classList.remove("login-page");
+    document.body.classList.add("admin-page");
+    render();
+  };
+
+  script.onerror = () => {
+    cleanup();
+    errEl.textContent = "Could not reach the backend. Check the API_URL in admin.js and your network connection.";
+  };
+
+  // Belt-and-braces timeout in case the request just hangs (no error, no
+  // load) rather than failing outright.
+  timeoutId = setTimeout(() => {
+    cleanup();
+    errEl.textContent = "Could not reach the backend. Check the API_URL in admin.js and your network connection.";
+  }, 15000);
+
+  script.src = `${API_URL}?key=${encodeURIComponent(key)}&callback=${callbackName}`;
+  document.body.appendChild(script);
 }
 
 // Auto-unlock if a key is already stored in this browser tab's session
