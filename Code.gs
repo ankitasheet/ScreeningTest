@@ -22,7 +22,7 @@
 
 // 🔑 CHANGE THIS to your own secret before deploying.
 // The admin dashboard must send this exact value to read results.
-const ADMIN_KEY = "CHANGE-ME-TO-A-LONG-RANDOM-SECRET";
+const ADMIN_KEY = "Qcar2026";
 
 const SHEET_NAME = "Submissions";
 const HEADERS = [
